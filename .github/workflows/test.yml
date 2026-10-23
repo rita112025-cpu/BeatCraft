@@ -8,7 +8,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: node --check game.js
+      - run: for f in $(find src -name "*.js"); do node --check "$f"; done
       - run: node --check runtime.js
       - run: npm test
       - run: npm install --no-save playwright@1.56.1

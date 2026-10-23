@@ -35,22 +35,26 @@ python3 -m http.server 8000
 
 ## 測試
 
-需 Node.js 20 以上，不需安裝套件：
+需 Node.js 20.6 以上，不需安裝套件：
 
 ```sh
 npm test
 ```
 
-測試涵蓋 12 關設定、存檔與錯誤復原、解鎖與最高分、單雙人譜面，以及選關、練習、倒數、暫停和返回選關的元件狀態流程。元件測試使用模擬 hooks，無法取代真實瀏覽器的畫面、音訊與觸控實測。
+測試涵蓋 12 關設定、存檔與錯誤復原、解鎖與最高分、單雙人譜面，以及選關、練習、倒數、暫停和返回選關的元件狀態流程。元件測試透過 `tests/support/` 的模組載入掛鉤，把 `runtime.js` 換成模擬 hooks，無法取代真實瀏覽器的畫面、音訊與觸控實測。
 
 ## 檔案
 
-- `index.html`：頁面與現有樣式。
-- `game.js`：從原始壓縮版抽出的 React 遊戲元件與互動。
-- `progress.js`：關卡設定、進度規則、存檔與固定譜面。
+- `index.html`：頁面與預先編譯的 Tailwind 樣式。新增的 class 若不在其中就不會生效。
+- `progress.js`：關卡設定、星星門檻、進度規則、存檔與固定譜面。
 - `runtime.js`：保留原版內嵌的 React 執行環境，無建置流程。
+- `src/main.js`：進入點，掛載 `App`。
+- `src/App.js`：持有進度與設定，依目前畫面切換元件。
+- `src/hooks/`：`useGame`（畫面流程、音符迴圈、判定、鍵盤）、`useShareCard`（限動圖與分享）、`usePageDecor`（字型、選單動畫）。
+- `src/game/`：不依賴 React 的純邏輯，包括 `rules.js`（判定、計分、勝負）、`audio.js`（音效）與 `shareCard.js`（分享文字與畫布）。
+- `src/components/`：各畫面（選單、選關、遊戲、結果、設定）。元件只負責渲染，不使用 hooks。
 - `tests/`：無外部依賴的自動化測試。
 
 ## GitHub Pages
 
-Settings → Pages → Deploy from a branch → main / root。請部署整個專案，包含三個 `.js` 檔案。
+Settings → Pages → Deploy from a branch → main / root。請部署整個專案，包含 `src/` 資料夾。

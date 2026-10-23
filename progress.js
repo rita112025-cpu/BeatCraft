@@ -28,8 +28,9 @@ export function saveProgress(progress,storage){
   try {storage ??= globalThis.localStorage;storage.setItem(key,JSON.stringify(progress.map(({id,best,stars})=>({id,best,stars}))));return true} catch {return false}
 }
 function unlock(progress){return progress.map((l,i)=>({...l,locked:i>0&&progress[i-1].stars<1}))}
+export const starsFor=score=>score>2200?3:score>1200?2:score>400?1:0;
 export function recordResult(progress,index,score){
-  const stars=score>2200?3:score>1200?2:score>400?1:0;
+  const stars=starsFor(score);
   return unlock(progress.map((l,i)=>i===index?{...l,best:Math.max(l.best,score),stars:Math.max(l.stars,stars)}:{...l}));
 }
 export function pattern(level,beat,duel=false){
