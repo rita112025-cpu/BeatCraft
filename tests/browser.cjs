@@ -26,6 +26,13 @@ const server = http.createServer((req,res)=>{
  assert.equal(await page.locator('button:disabled').count(),0);
  await page.getByRole('button',{name:/^Lv1\s/}).click();
  await page.clock.runFor(3200);
+ // Repeated settings changes must not keep resetting a partial second.
+ for (let i=0;i<4;i++) {
+  await page.clock.runFor(350);
+  await page.locator('label').filter({hasText:'背景音樂'}).getByRole('button').click();
+ }
+ const timeLeft=await page.evaluate(()=>Number.parseInt([...document.querySelectorAll('div')].find(el=>el.textContent==='TIME').nextElementSibling.textContent));
+ assert.ok(timeLeft<=29,'settings changes preserve elapsed active time');
  await page.getByRole('button',{name:/暫停 \/ 空白鍵/}).click();
  await page.getByRole('dialog',{name:'遊戲已暫停'}).waitFor();
  const pausedText=await page.locator('body').innerText();
@@ -56,6 +63,29 @@ const server = http.createServer((req,res)=>{
  await page.reload();await page.getByRole('button',{name:'開始遊戲 ▶'}).click();
  assert.ok(await page.getByRole('button',{name:/^Lv2\s/}).isEnabled(),'next level stays unlocked after reload');
  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'mobile layout has no horizontal overflow');
+ // In versus, let blue lose its lives while pink keeps hitting notes.
+ await page.getByRole('button',{name:'雙人對戰'}).click();
+ await page.getByRole('button',{name:/^Lv1\s/}).click();
+ await page.evaluate(()=>{
+  window.autoplayKeys=['j','k'];
+  const seen=new WeakSet();window.autoPlay=setInterval(()=>{
+   for(const note of document.querySelectorAll('div.absolute')){
+    const top=parseFloat(note.style.top),left=note.style.left;
+    if(!left.startsWith('calc(')||top<83||top>89||seen.has(note))continue;
+    const lane=Math.round((parseFloat(left.slice(5))-12.5)/25);
+    const key=['d','f','j','k'][lane];
+    if(!window.autoplayKeys.includes(key))continue;
+    seen.add(note);window.dispatchEvent(new KeyboardEvent('keydown',{key,bubbles:true}));
+   }
+  },16);
+ });
+ await page.clock.runFor(10000);
+ const blue=page.getByText('藍隊 P1 · 已淘汰',{exact:true});
+ await blue.waitFor();
+ const before=await blue.evaluate(el=>el.nextElementSibling.textContent);
+ await page.evaluate(()=>window.autoplayKeys=['d','f','j','k']);
+ await page.clock.runFor(5000);
+ assert.equal(await blue.evaluate(el=>el.nextElementSibling.textContent),before,'eliminated player cannot score');
  assert.deepEqual(errors,[],'no browser runtime errors');
  console.log('Browser smoke passed: mobile layout, 12 levels, practice, pause, standard scoring, save/reload and unlock.');
  } finally {await browser.close();await new Promise(resolve=>server.close(resolve));}
