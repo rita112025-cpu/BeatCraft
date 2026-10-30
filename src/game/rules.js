@@ -19,6 +19,7 @@ export function judge(distance) {
 }
 
 export function applyHit(player, quality) {
+  if (player.lives <= 0) return player;
   const combo = player.combo + 1;
   const comboBonus = Math.floor(player.combo / 5) * 10;
   return {
@@ -31,6 +32,7 @@ export function applyHit(player, quality) {
 }
 
 export function applyMiss(player, practice) {
+  if (player.lives <= 0) return player;
   return {
     ...player,
     lives: practice ? player.lives : Math.max(0, player.lives - 1),
