@@ -119,7 +119,7 @@ function TeamCard({ title, player, background, heart }) {
   return h("div", {
     className: `chunky-sm ${background} p-2 flex flex-col items-center`,
     children: [
-      h("div", { className: "text-[10px] font-black tracking-widest", children: title }),
+      h("div", { className: "text-[10px] font-black tracking-widest", children: player.lives > 0 ? title : `${title} · 已淘汰` }),
       h("div", { className: "fredoka text-[20px] font-black leading-none", children: player.score }),
       h("div", { className: "text-[11px] font-black", children: ["x", player.combo, " ", player.combo > 5 ? "🔥" : ""] }),
       h("div", {
