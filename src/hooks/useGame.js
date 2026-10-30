@@ -18,7 +18,7 @@ import {
   teamOfLane,
 } from "../game/rules.js";
 
-const newClock = () => ({ lastFrame: 0, sinceBeat: 0, beatIndex: 0, now: 0 });
+const newClock = () => ({ lastFrame: null, elapsedMs: 0, sinceBeat: 0, beatIndex: 0, now: 0 });
 
 export function useGame({ progress, setProgress, settings, sfx }) {
   const [screen, setScreen] = React.useState("menu");
@@ -139,7 +139,7 @@ export function useGame({ progress, setProgress, settings, sfx }) {
   // Frame loop: spawns notes on the beat, moves them and counts down the clock.
   React.useEffect(() => {
     if (!running) {
-      clock.current.lastFrame = 0;
+      clock.current.lastFrame = null;
       return;
     }
     const beatMs = beatInterval(level, speed);
@@ -149,10 +149,12 @@ export function useGame({ progress, setProgress, settings, sfx }) {
 
     const step = (now) => {
       const c = clock.current;
-      if (!c.lastFrame) c.lastFrame = now;
+      if (c.lastFrame === null) c.lastFrame = now;
       const elapsed = now - c.lastFrame;
       c.lastFrame = now;
       c.now = now;
+      c.elapsedMs += elapsed;
+      setTimeLeft(Math.max(0, Math.ceil(level.duration - c.elapsedMs / 1000)));
       c.sinceBeat += elapsed;
 
       if (c.sinceBeat >= beatMs) {
@@ -177,10 +179,8 @@ export function useGame({ progress, setProgress, settings, sfx }) {
     };
 
     frameId = requestAnimationFrame(step);
-    const timer = setInterval(() => setTimeLeft((value) => Math.max(0, value - 1)), 1000);
     return () => {
       cancelAnimationFrame(frameId);
-      clearInterval(timer);
     };
   }, [running, level, mode, speed, reduceMotion, playBeat, missNotes]);
 
@@ -195,10 +195,11 @@ export function useGame({ progress, setProgress, settings, sfx }) {
   const hit = React.useCallback(
     (lane) => {
       if (!running) return;
+      const team = teamOfLane(lane, mode);
+      if (players[team].lives <= 0) return;
       setPressedLane(lane);
       setTimeout(() => setPressedLane((current) => (current === lane ? null : current)), 120);
 
-      const team = teamOfLane(lane, mode);
       const target = closestNote(notes.filter((n) => n.lane === lane && !n.hit && !judged.current.has(n.id)));
       if (!target) {
         const opponentNoteNearLine = notes.some(
@@ -236,7 +237,7 @@ export function useGame({ progress, setProgress, settings, sfx }) {
         setParticles((current) => [...current, ...burst]);
       }
     },
-    [running, notes, mode, isDemon, reduceMotion, registerMiss, shake, playJudgement],
+    [running, notes, mode, players, isDemon, reduceMotion, registerMiss, shake, playJudgement],
   );
 
   React.useEffect(() => {
