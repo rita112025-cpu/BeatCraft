@@ -169,12 +169,14 @@ export function useGame({ progress, setProgress, settings, sfx }) {
         }
       }
 
+      // Returning the same array when there is nothing to move lets React skip the re-render.
       setNotes((current) => {
+        if (current.length === 0) return current;
         const { active, missed } = advanceNotes(current, elapsed * velocity);
         if (missed.length) setTimeout(() => missNotes(missed), 0);
         return active;
       });
-      if (!reduceMotion) setParticles(stepParticles);
+      if (!reduceMotion) setParticles((current) => (current.length === 0 ? current : stepParticles(current)));
       frameId = requestAnimationFrame(step);
     };
 
@@ -240,23 +242,31 @@ export function useGame({ progress, setProgress, settings, sfx }) {
     [running, notes, mode, players, isDemon, reduceMotion, registerMiss, shake, playJudgement],
   );
 
+  // `hit` changes on every frame (it depends on `notes`), so the key listener reads it through a ref
+  // instead of being removed and re-added 60 times a second.
+  const latestInput = React.useRef({ hit, screen, togglePause });
+  React.useEffect(() => {
+    latestInput.current = { hit, screen, togglePause };
+  }, [hit, screen, togglePause]);
+
   React.useEffect(() => {
     const onKeyDown = (event) => {
+      const { hit: onHit, screen: currentScreen, togglePause: onToggle } = latestInput.current;
       if (event.repeat || /INPUT|SELECT|TEXTAREA/.test(event.target.tagName)) return;
-      if (event.code === "Space" && screen === "playing") {
+      if (event.code === "Space" && currentScreen === "playing") {
         event.preventDefault();
-        togglePause();
+        onToggle();
         return;
       }
       const lane = KEY_TO_LANE[event.key.toLowerCase()];
       if (lane !== undefined) {
         event.preventDefault();
-        hit(lane);
+        onHit(lane);
       }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [hit, screen, togglePause]);
+  }, []);
 
   return {
     screen,
