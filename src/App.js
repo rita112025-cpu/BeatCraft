@@ -5,7 +5,7 @@ import { loadProgress, saveProgress } from "../progress.js";
 import { DEFAULT_SETTINGS } from "./constants.js";
 import { createSfx } from "./game/audio.js";
 import { useGame } from "./hooks/useGame.js";
-import { useGoogleFonts, useMenuBeat } from "./hooks/usePageDecor.js";
+import { useGoogleFonts } from "./hooks/usePageDecor.js";
 import { useShareCard } from "./hooks/useShareCard.js";
 import { Hero } from "./components/Hero.js";
 import { LevelSelectScreen } from "./components/LevelSelectScreen.js";
@@ -77,7 +77,6 @@ export function App() {
   const [sfx] = React.useState(createSfx);
   const game = useGame({ progress, setProgress, settings, sfx });
   const share = useShareCard(game);
-  const menuBeat = useMenuBeat();
   useGoogleFonts();
 
   React.useEffect(() => {
@@ -99,7 +98,7 @@ export function App() {
       h("div", {
         className: "mx-auto max-w-[980px] px-4 sm:px-6 pt-3 sm:pt-5",
         children: [
-          h(Hero, { beat: menuBeat, reduceMotion: settings.reduceMotion }),
+          h(Hero, { reduceMotion: settings.reduceMotion }),
           h("div", {
             className: "mt-5 sm:mt-7 mx-auto max-w-[500px]",
             children: [

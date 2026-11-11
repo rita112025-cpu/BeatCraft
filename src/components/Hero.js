@@ -1,6 +1,7 @@
 // Top banner with the title copy and the idle lane animation.
 import { h } from "../../runtime.js";
 import { LANE_COLORS, LANE_KEYS } from "../constants.js";
+import { useMenuBeat } from "../hooks/usePageDecor.js";
 
 const BADGES = [
   ["30秒一局", "bg-[#FFE14A]"],
@@ -37,7 +38,9 @@ function LaneDemo({ beat, reduceMotion }) {
   });
 }
 
-export function Hero({ beat, reduceMotion }) {
+// The beat timer lives here so its 350ms ticks re-render only this card, not the whole app.
+export function Hero({ reduceMotion }) {
+  const beat = useMenuBeat();
   return h("div", {
     className: "chunky bg-white flex flex-col lg:flex-row items-stretch overflow-hidden",
     children: [
